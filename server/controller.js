@@ -1,35 +1,89 @@
-require('dotenv').config()
+const dotenv = require("dotenv").config()
 const {CONNECTION_STRING} = process.env
-const Sequelize = require('sequelize')
+const Sequelize = require("sequelize")
 
-const sequelize = new Sequelize(CONNECTION_STRING, {
-    
-        dialect: 'postgres',
-        dialectOptions: {
-            ssl: {
-                rejectUnauthorized: false
-            }
+const sequelize = new Sequelize (CONNECTION_STRING, {
+    dialect: 'postgres',
+    dialectOptions: {
+        ssl: {
+            rejectUnauthorized: false
         }
-      })
+    }
+})
+
 module.exports = {
+    deleteCity: (req, res) => {
+        const {id} = req.params
+        sequelize.query(`
+            DELETE FROM cities
+            WHERE city_id = ${id}
+        `)
+        .then(dbRes =>
+            res.status(200).send(dbRes[0])
+        )
+        .catch(err => {
+            console.log(err)
+            res.status(500).send()
+        })
+    },
+    getCities: (req, res) => {
+        sequelize.query(`
+            SELECT city_id, cities.name AS city, rating, countries.country_id, countries.name AS country
+            FROM cities
+            JOIN countries
+            ON cities.country_id = countries.country_id
+            ORDER BY rating DESC;
+        `)
+        .then(dbRes =>
+            res.status(200).send(dbRes[0])
+        )
+        .catch(err => {
+            console.log(err)
+            res.status(500).send()
+        })
+    },
+    createCity: (req, res) => {
+        const {name, rating, countryId} = req.body
+        sequelize.query(`
+            INSERT INTO cities
+            (name, rating, country_id)
+            VALUES
+            ('${name}', ${rating}, ${countryId});
+        `)
+        .then(dbRes =>
+            res.status(200).send(dbRes[0])
+        )
+        .catch(err => {
+            console.log(err)
+            res.status(500).send()
+        })
+    },
+    getCountries: (req, res) => {
+        sequelize.query(`
+            SELECT * FROM countries;
+        `)
+        .then(dbRes =>
+            res.status(200).send(dbRes[0])
+        )
+        .catch(err => {
+            console.log(err)
+            res.status(500).send()
+        })
+    },
     seed: (req, res) => {
         sequelize.query(`
             drop table if exists cities;
             drop table if exists countries;
-
             create table countries (
                 country_id serial primary key, 
                 name varchar
             );
-
             create table cities (
-                city_id SERIAL PRIMARY KEY,
-                county_id INT NOT NULL REFERENCES countries(country_id),
-                name VARCHAR(100),
-                rating INT
-               
-              );
-
+                city_id serial primary key,
+                name varchar not null,
+                rating integer not null,
+                country_id integer not null references countries(country_id)
+            );
             insert into countries (name)
             values ('Afghanistan'),
             ('Albania'),
@@ -226,38 +280,16 @@ module.exports = {
             ('Yemen'),
             ('Zambia'),
             ('Zimbabwe');
+            insert into cities
+            (name, rating, country_id)
+            values
+            ('New York', 4, 187),
+            ('Paris', 5, 61),
+            ('Singapore', 4, 157);
         `).then(() => {
             console.log('DB seeded!')
             res.sendStatus(200)
         }).catch(err => console.log('error seeding DB', err))
-    }}
-        module.exports = {
-            getCountries: (req, res) => {
-                sequelize.query(`select * from countries`)
-                    .then(dbRes => res.status(200).send(dbRes[0]))
-                    .catch(err => console.log(err))
-            },
+    }
+}
 
-           
-                createCity: (req, res) => {
-                    sequelize.query(`select * from countries`)
-                        .then(dbRes => res.status(200).send(dbRes[0]))
-                        .catch(err => console.log(err))
-                },
-                updateUserInfo: (req, res) => {
-                    let {
-                        firstName,
-                        lastName,
-                        phoneNumber,
-                        email,
-                        address,
-                        city,
-                        state,
-                        zipCode
-                    } = req.body
-            
-                }}
-
-
-
-                
